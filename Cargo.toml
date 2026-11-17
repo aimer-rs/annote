@@ -1,0 +1,24 @@
+[package]
+name = "annote"
+version = "0.1.0"
+edition = "2024"
+description = "A simple note app that build for testing aimer ability...."
+
+[lib]
+path = "src/main.rs"
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[dependencies]
+# aimer = {git="https://github.com/Cottons29/aimer.git", branch = "main"}
+
+aimer = { path = "../aimer", features = ["provider", "svg", "icons", "native", "markdown", "image-picker"] }
+
+# The live markdown preview parses the whole note on every keystroke and the text layout walks
+# its graphemes. Both are dependencies, so a debug build would run them unoptimised and the
+# editor would feel slow in a way the app does not. Optimising only these keeps the rest of
+# the build debuggable.
+[profile.dev.package.markdown]
+opt-level = 3
+
+[profile.dev.package.unicode-segmentation]
+opt-level = 3

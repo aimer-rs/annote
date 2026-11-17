@@ -1,0 +1,6 @@
+[package]
+name = "Annote"
+version = "0.1.0"
+description = "A simple note app written using Aimer"
+author = "Cottons29"
+group = "rs.aimer.annote"
