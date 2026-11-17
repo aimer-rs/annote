@@ -11,4 +11,4 @@ This is a note app that build using Aimer framework.
 There are multiple options you can use for verification
 
 - cargo tools
-- use aimer-app skill and aimer-mcp
+- use aimer-app skill and aimer-mcp for visual verification

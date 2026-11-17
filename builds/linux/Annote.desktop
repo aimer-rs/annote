@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Annote
+Comment=Annote
+Exec=annote
+Icon=annote
+Terminal=false
+Type=Application
+Categories=Utility;
