@@ -1,5 +1,7 @@
+mod file_opener;
 mod frame;
 
+use self::file_opener::FileOpener;
 use self::frame::Frame;
 use crate::theme::NoteTheme;
 use aimer::animation::curves;
@@ -21,6 +23,6 @@ impl StatelessWidget for AppShell {
             .data(theme)
             .duration(Duration::from_millis(300))
             .curve(curves::EASE_IN_OUT)
-            .child(Frame)
+            .child(FileOpener::new(Frame))
     }
 }

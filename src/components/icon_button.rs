@@ -64,27 +64,37 @@ impl StatelessWidget for IconButton {
             .no_decor()
             .on_press(self.on_press.clone())
             .build(move |s| {
-                ImplicitAnimatedBuilder::new(look(&s, theme, floating), DURATION, curves::FAST_OUT_SLOW_IN, move |look| {
-                    Scalable::new().scale(look.scale).child(
-                        Container::new()
-                            .width(size)
-                            .height(size)
-                            .decoration(if floating {
-                                vec![
-                                    glass(theme).notype(),
-                                    BorderRadius::all(size / 2.0).notype(),
-                                    look.tint.notype(),
-                                ]
-                            } else {
-                                vec![BorderRadius::all(size / 2.0).notype(), look.tint.notype()]
-                            })
-                            .child(Align::new().alignment(Alignment::MidCenter).child(icon(
-                                data,
-                                (size * 0.5) as u32,
-                                theme.text,
-                            ))),
-                    )
-                })
+                ImplicitAnimatedBuilder::new(
+                    look(&s, theme, floating),
+                    DURATION,
+                    curves::FAST_OUT_SLOW_IN,
+                    move |look| {
+                        Scalable::new()
+                            .scale(look.scale)
+                            .child(
+                                Container::new()
+                                    .width(size)
+                                    .height(size)
+                                    .decoration(if floating {
+                                        vec![
+                                            glass(theme, size).notype(),
+                                            BorderRadius::all(size / 2.0).notype(),
+                                            look.tint.notype(),
+                                        ]
+                                    } else {
+                                        vec![
+                                            BorderRadius::all(size / 2.0).notype(),
+                                            look.tint.notype(),
+                                        ]
+                                    })
+                                    .child(
+                                        Align::new()
+                                            .alignment(Alignment::MidCenter)
+                                            .child(icon(data, (size * 0.5) as u32, theme.text)),
+                                    ),
+                            )
+                    },
+                )
             })
     }
 }
@@ -92,10 +102,19 @@ impl StatelessWidget for IconButton {
 /// How the button looks while it is pressed, hovered, or at rest.
 fn look(s: &ButtonVisualState, theme: NoteTheme, floating: bool) -> Look {
     if s.is_pressed {
-        Look { scale: if floating { PRESSED_SCALE } else { 1.0 }, tint: theme.hover.with_alpha(0.2) }
+        Look {
+            scale: if floating { PRESSED_SCALE } else { 1.0 },
+            tint: theme.hover.with_alpha(0.2),
+        }
     } else if s.is_hovered {
-        Look { scale: 1.0, tint: theme.hover }
+        Look {
+            scale: 1.0,
+            tint: theme.hover,
+        }
     } else {
-        Look { scale: 1.0, tint: Color::Transparent }
+        Look {
+            scale: 1.0,
+            tint: theme.text.with_alpha(0.03),
+        }
     }
 }

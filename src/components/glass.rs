@@ -5,25 +5,25 @@ use aimer::{Color, ResolvedSize, Vec2d};
 
 /// The liquid glass the floating toolbar is made of: the page behind it blurred,
 /// a lens that bends what is under the rim, and a light edge, all inside a pill.
-pub fn glass(theme: NoteTheme) -> impl Decoration {
+pub fn glass(theme: NoteTheme, size: f32) -> impl Decoration {
     type Style = MagnificationStyle;
     GlassDecoration::new(theme.list.with_alpha(0.5))
         .light_edge(LightEdge::new().width(1.0).strength(0.6))
         .lens(
             Magnification::new()
-                .zoom(1.2)
+                .zoom(1.15)
                 .thickness(24.0)
-                .bulge(0.1)
+                .bulge(0.05)
                 .bevel_width(12.0)
-                .bulge_radius(8.0)
+                .bulge_radius(size / 2.0)
                 .style(Style::REFRACTION | Style::BULGE | Style::UNIFORM),
         )
         .backdrop(
             BackdropFilter::new()
-                .blur_radius(4.0)
+                .blur_radius(6.0)
                 .saturation(0.65)
-                .brightness(1.0)
-                .contrast(0.9),
+                .brightness(0.9)
+                .contrast(0.8),
         )
 }
 

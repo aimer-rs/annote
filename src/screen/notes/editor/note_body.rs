@@ -2,17 +2,18 @@ mod note_date;
 
 use self::note_date::NoteDate;
 use super::TOOLBAR_HEIGHT;
+use super::toolbar::Toolbar;
 use crate::components::pad::pad;
 use crate::store::NoteStore;
 use crate::theme::NoteTheme;
-use aimer::Color;
+use aimer::{Color, Dimension, Positioned, ScrollController, StateUpdater, Vec2d};
 use aimer::input::TextArea;
 use aimer::input::TextEditingController;
 use aimer::input::input::{TextEmbedder, TextHighlighter};
 use aimer::style::{BoxDecoration, TextAlign, TextStyle, Theme};
 use aimer::{
     BuildContext, Column, Container, Key, ProviderHandle, Scrollable, SizedBox, State, StateView,
-    StatefulWidget, Text, Widget,
+    StatefulWidget, Stack, Text, Widget,
 };
 
 /// How big a note may be, in bytes, before it is edited as plain text.
@@ -23,7 +24,10 @@ use aimer::{
 /// build was tried with a 2.3 MB note of headings, lists, code and links. This is a
 /// safety net past that, not a measured limit. A field is also held to eight million
 /// pixels of height, which a note of short lines reaches in fewer bytes.
-const LARGE_NOTE_BYTES: usize = 4_000_000;
+const LARGE_NOTE_BYTES: usize = 40_000_000;
+
+/// How far the note scrolls, in logical pixels, before the toolbar gets its backdrop.
+const SCROLLED_OFFSET: f32 = 50.0;
 
 /// The date and the text of one note. The text is edited in place and the store is
 /// told of every change. The widget is keyed by the note, so each note gets a
@@ -32,11 +36,13 @@ const LARGE_NOTE_BYTES: usize = 4_000_000;
 pub struct NoteBody {
     key: Option<Key>,
     id: u64,
-    initial: String,
+    /// The text the state is made from, shared with the store: the controller copies it into its
+    /// own tree of chunks, so a note of megabytes is not copied into a `String` first.
+    initial: std::rc::Rc<String>,
 }
 
 impl NoteBody {
-    pub fn new(id: u64, initial: String) -> Self {
+    pub fn new(id: u64, initial: std::rc::Rc<String>) -> Self {
         Self { key: Some(Key::from(("note", id))), id, initial }
     }
 }
@@ -49,6 +55,11 @@ struct NoteBodyState {
     highlighter: Option<TextHighlighter>,
     /// Shows the tables and code blocks of the note as widgets. `None` as above.
     embedder: Option<TextEmbedder>,
+    /// The scroll of the page. Each note has its own, so one note's scroll never
+    /// carries over to the next.
+    scroll: ScrollController,
+    /// Whether the note has scrolled far enough that the toolbar floats over text.
+    scrolled: bool,
 }
 
 impl NoteBodyState {
@@ -60,7 +71,8 @@ impl NoteBodyState {
 impl State<NoteBody> for NoteBodyState {
     fn create(widget: NoteBody) -> Self {
         // Decided once, when the note opens, so the editor never changes under the caret.
-        let (highlighter, embedder) = if widget.initial.len() > LARGE_NOTE_BYTES {
+        let initial = widget.initial;
+        let (highlighter, embedder) = if initial.len() > LARGE_NOTE_BYTES {
             (None, None)
         } else {
             let (highlighter, embedder) = crate::markdown::highlighter_and_embedder();
@@ -68,10 +80,23 @@ impl State<NoteBody> for NoteBodyState {
         };
         Self {
             id: widget.id,
-            controller: TextEditingController::with_text(widget.initial),
+            controller: TextEditingController::with_str(&initial),
             highlighter,
             embedder,
+            scroll: ScrollController::new(),
+            scrolled: false,
         }
+    }
+
+    fn on_mount(&mut self, updater: StateUpdater<Self>) {
+        // The page is only rebuilt when it crosses the line, not on every frame of the scroll.
+        let scrolled = std::cell::Cell::new(false);
+        self.scroll.on_scroll(move |offset: Vec2d| {
+            let past = offset.y > SCROLLED_OFFSET;
+            if scrolled.replace(past) != past {
+                updater.try_set_state(move |state| state.scrolled = past);
+            }
+        });
     }
 
     fn init_state(&mut self) {
@@ -129,6 +154,16 @@ impl State<NoteBody> for NoteBodyState {
         // The date and the area scroll together, under the floating toolbar, so a long
         // note passes beneath its glass. The area is as tall as its text and the pane
         // scrolls it, so a long note never scrolls inside the field itself.
-        Scrollable::new().child(Column::new().children(page))
+        let page = Scrollable::new().controller(this.scroll.clone()).child(Column::new().children(page));
+
+        // The toolbar lives here, with the page it floats over, because this is what knows
+        // how far the page has scrolled.
+        Stack::new().children([
+            SizedBox::new()
+                .width(Dimension::Percent(100.0))
+                .height(Dimension::Percent(100.0))
+                .box_child(page),
+            Positioned::new().layer(1).top(0).left(0).right(0).box_child(Toolbar::new(this.scrolled)).boxed(),
+        ])
     }
 }

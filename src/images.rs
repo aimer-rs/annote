@@ -111,7 +111,7 @@ pub fn pick_and_insert(store: ProviderHandle<NoteStore>, note: u64) {
         let value = controller.value();
         let selection = value.selection();
         let range = selection.anchor().min(selection.focus())..selection.anchor().max(selection.focus());
-        let (text, cursor) = insert_picture(value.text(), range, &picture);
+        let (text, cursor) = insert_picture(&value.text(), range, &picture);
         controller.set_value(TextEditingValue::new(text.clone(), TextSelection::new(cursor, cursor), None));
         // A change made in code is not reported by the field, so the note is told.
         store.update(|store| store.set_body(note, text));

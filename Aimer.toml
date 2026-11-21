@@ -4,3 +4,12 @@ version = "0.1.0"
 description = "A simple note app written using Aimer"
 author = "Cottons29"
 group = "rs.aimer.annote"
+
+# The kinds of file the app opens: what makes the system offer it a file dropped
+# on its icon or chosen in "Open With". macOS reads the extensions, iOS only the
+# `utis`, Android the `mime_types` or the extensions.
+[[documents]]
+name = "Markdown document"
+extensions = ["md", "markdown", "txt"]
+utis = ["net.daringfireball.markdown", "public.plain-text"]
+mime_types = ["text/markdown", "text/plain"]

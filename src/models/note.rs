@@ -3,7 +3,10 @@ pub struct Note {
     pub id: u64,
     pub folder: u64,
     /// The whole note. Like Apple Notes, its first line is its title.
-    pub body: String,
+    ///
+    /// Shared: a provider copies the whole store when a snapshot of it is still held, and a
+    /// note of megabytes is then one more handle and not one more copy.
+    pub body: std::rc::Rc<String>,
     pub pinned: bool,
     /// Seconds since the Unix epoch.
     pub updated: u64,
@@ -39,10 +42,10 @@ mod tests {
 
     #[test]
     fn title_and_preview() {
-        let note = Note { id: 1, folder: 1, body: "\n# Hello\n\nworld".into(), pinned: false, updated: 0 };
+        let note = Note { id: 1, folder: 1, body: std::rc::Rc::new("\n# Hello\n\nworld".to_owned()), pinned: false, updated: 0 };
         assert_eq!(note.title(), "Hello");
         assert_eq!(note.preview(), "world");
-        let empty = Note { body: String::new(), ..note };
+        let empty = Note { body: Default::default(), ..note };
         assert_eq!(empty.title(), "New Note");
     }
 }
